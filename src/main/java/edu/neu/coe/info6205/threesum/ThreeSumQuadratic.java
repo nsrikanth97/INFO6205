@@ -38,10 +38,31 @@ public class ThreeSumQuadratic implements ThreeSum {
     public List<Triple> getTriples(int j) {
         List<Triple> triples = new ArrayList<>();
         // FIXME : for each candidate, test if a[i] + a[j] + a[k] = 0.
+        int less  = j-1;
+        int high = j+1;
+        int sum;
+        while(less >= 0 && high < length){
+            sum = a[less] + a[high];
+            if(sum  == -a[j]){
+                triples.add(new Triple(a[less],a[j],a[high]));
+                high++;
+            }else if(sum < -a[j]){
+                high++;
+            }else{
+                less--;
+            }
+        }
         // END 
         return triples;
     }
 
     private final int[] a;
     private final int length;
+
+    public static void main(String[] args) {
+        int[] ints = {-40, -20, -10, 0, 5, 10, 30, 40};
+        ThreeSum target = new ThreeSumQuadratic(ints);
+        target.getTriples();
+        System.out.println(target);
+    }
 }
