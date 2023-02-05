@@ -63,27 +63,25 @@ public class Timer {
         // FIXME: note that the timer is running when this method is called
         //  and should still be running when it returns.
         //  by replacing the following code
-        T t = supplier.get();
-        pause();
-        if (preFunction != null) {
-            for (int i = 0; i < n; i++) {
-                t = preFunction.apply(t);
-            }
-        }
-        resume();
-        U u = null;
+        T t;
         for (int i = 0; i < n; i++) {
-            u = function.apply(t);
+            pause();
+            t = supplier.get();
+            if (preFunction != null) {
+                t = preFunction.apply(supplier.get());
+            }
+            resume();
+            U u = function.apply(t);
+            pause();
+            if (postFunction != null) {
+                postFunction.accept(u);
+            }
+            resume();
             lap();
         }
         pause();
         final double result = meanLapTime();
         resume();
-        if (postFunction != null) {
-            for (int i = 0; i < n; i++) {
-                postFunction.accept(u);
-            }
-        }
         return result;
         // END 
     }
