@@ -82,6 +82,10 @@ public class UF_HWQUPC implements UF {
         validate(p);
         int root = p;
         // FIXME
+        while(root != parent[root]){
+            if(pathCompression) doPathCompression(root);
+            root = getParent(root);
+        }
         // END 
         return root;
     }
@@ -111,8 +115,9 @@ public class UF_HWQUPC implements UF {
      */
     public void union(int p, int q) {
         // CONSIDER can we avoid doing find again?
+        validate(p);
+        validate(q);
         mergeComponents(find(p), find(q));
-        count--;
     }
 
     @Override
@@ -170,6 +175,18 @@ public class UF_HWQUPC implements UF {
 
     private void mergeComponents(int i, int j) {
         // FIXME make shorter root point to taller one
+        if(i == j)
+            return;
+        int s1 = height[i];
+        int s2 = height[j];
+        if(s1 < s2){
+            updateParent(i,j);
+            updateHeight(j,i);
+        }else{
+            updateParent(j,i);
+            updateHeight(i,j);
+        }
+        count--;
         // END 
     }
 
@@ -178,6 +195,7 @@ public class UF_HWQUPC implements UF {
      */
     private void doPathCompression(int i) {
         // FIXME update parent to value of grandparent
+        parent[i] = getParent(getParent(i));
         // END 
     }
 }
