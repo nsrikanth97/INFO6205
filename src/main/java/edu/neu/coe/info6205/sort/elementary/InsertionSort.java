@@ -5,9 +5,18 @@ package edu.neu.coe.info6205.sort.elementary;
 
 import edu.neu.coe.info6205.sort.BaseHelper;
 import edu.neu.coe.info6205.sort.Helper;
+import edu.neu.coe.info6205.sort.InstrumentedHelper;
 import edu.neu.coe.info6205.sort.SortWithHelper;
 import edu.neu.coe.info6205.util.Config;
 
+import java.lang.reflect.Array;
+import java.util.Arrays;
+
+/**
+ * Class InsertionSort.
+ *
+ * @param <X> the underlying comparable type.
+ */
 public class InsertionSort<X extends Comparable<X>> extends SortWithHelper<X> {
 
     /**
@@ -57,9 +66,21 @@ public class InsertionSort<X extends Comparable<X>> extends SortWithHelper<X> {
      */
     public void sort(X[] xs, int from, int to) {
         final Helper<X> helper = getHelper();
-
         // FIXME
+        int j;
+        for(int i = from+1; i< to ; i++){
+            j = i;
+            while(j > from && helper.swapStableConditional(xs,j)){
+                j--;
+            }
+        }
         // END 
+    }
+
+    private void swap(X[] xs, int i, int j){
+        X temp = xs[i];
+        xs[i] = xs[j];
+        xs[j] = temp;
     }
 
     public static final String DESCRIPTION = "Insertion sort";

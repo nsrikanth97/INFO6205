@@ -12,7 +12,8 @@ import static edu.neu.coe.info6205.util.Utilities.formatWhole;
  *
  * @param <X> the underlying type (must be Comparable).
  */
-public class InstrumentedHelper<X extends Comparable<X>> extends BaseHelper<X> {
+public class
+InstrumentedHelper<X extends Comparable<X>> extends BaseHelper<X> {
 
     final static LazyLogger logger = new LazyLogger(InstrumentedHelper.class);
 
