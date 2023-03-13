@@ -9,17 +9,18 @@ public class HeapSort<X extends Comparable<X>> extends SortWithHelper<X> {
         super(helper);
     }
 
+
     @Override
     public void sort(X[] array, int from, int to) {
         if (array == null || array.length <= 1) return;
 
         // XXX construction phase
         buildMaxHeap(array);
-
-        // XXX sort-down phase
         Helper<X> helper = getHelper();
+        boolean instrumentation = helper.instrumented();
+        // XXX sort-down phase
         for (int i = array.length - 1; i >= 1; i--) {
-            helper.swap(array, 0, i);
+            swap(array, 0, i, helper, instrumentation);
             maxHeap(array, i, 0);
         }
     }
@@ -31,14 +32,34 @@ public class HeapSort<X extends Comparable<X>> extends SortWithHelper<X> {
 
     private void maxHeap(X[] array, int heapSize, int index) {
         Helper<X> helper = getHelper();
+        boolean instrumentation = helper.instrumented();
         final int left = index * 2 + 1;
         final int right = index * 2 + 2;
         int largest = index;
-        if (left < heapSize && helper.compare(array, largest, left) < 0) largest = left;
-        if (right < heapSize && helper.compare(array, largest, right) < 0) largest = right;
+        if (left < heapSize && compare(array, largest, left,helper, instrumentation))
+            largest = left;
+        if (right < heapSize && compare(array, largest, right, helper, instrumentation))
+            largest = right;
         if (index != largest) {
-            helper.swap(array, index, largest);
+            swap(array, largest, index, helper, instrumentation);
             maxHeap(array, heapSize, largest);
         }
+    }
+
+    private boolean compare(X[] x, int i, int j, Helper<X> helper, boolean instrumentation){
+        if(instrumentation)
+            return helper.compare(x, i, j) <0;
+        return x[i].compareTo(x[j]) < 0;
+    }
+
+    private void swap(X[] x, int i, int j,  Helper<X> helper, boolean instrumentation){
+        if(instrumentation)
+            helper.swap(x, i, j);
+        else{
+            X temp = x[i];
+            x[i] = x[j];
+            x[j] = temp;
+        }
+
     }
 }

@@ -44,13 +44,30 @@ public class MergeSort<X extends Comparable<X>> extends SortWithHelper<X> {
         getHelper().init(xs.length);
         X[] result = makeCopy ? Arrays.copyOf(xs, xs.length) : xs;
         sort(result, 0, result.length);
+
         return result;
     }
 
     @Override
     public void sort(X[] a, int from, int to) {
         // CONSIDER don't copy but just allocate according to the xs/aux interchange optimization
-        X[] aux = Arrays.copyOf(a, a.length);
+//        X[] aux = Arrays.copyOf(a, a.length)    ;
+        final Helper<X> helper = getHelper();
+        Config config = helper.getConfig();
+        X[] aux = (X[]) new Comparable[a.length];
+        boolean instrumentation = helper.instrumented();
+        boolean noCopy = config.getBoolean(MERGESORT, NOCOPY);
+        if(noCopy){
+            if(instrumentation){
+                for(int i = 0;  i< a.length; i++){
+                    helper.copy(a, i, aux, i);
+                }
+            }else{
+                for(int i = 0;  i< a.length; i++){
+                    aux[i] = a[i];
+                }
+            }
+        }
         sort(a, aux, from, to);
     }
 
@@ -65,21 +82,95 @@ public class MergeSort<X extends Comparable<X>> extends SortWithHelper<X> {
         }
 
         // FIXME : implement merge sort with insurance and no-copy optimizations
+        int mid =  from + (to-from)/2;
+        if(noCopy){
+            sort (aux, a, from, mid);
+            sort (aux, a, mid, to);
+            if(insurance && helper.less(aux[mid-1],aux[mid])){
+                for (int k = from; k < to; k++){
+                    helper.copy(aux, k, a, k);
+                }
+                return;
+            }
+            merge(aux, a, from, mid, to);
+        }else{
+            sort (a, aux, from, mid);
+            sort (a, aux, mid, to);
+            if(insurance && helper.less(a[mid-1],a[mid]))
+                return;
+            merge(a, aux, from, mid, to, false);
+        }
         // END 
     }
 
-    // CONSIDER combine with MergeSortBasic perhaps.
     private void merge(X[] sorted, X[] result, int from, int mid, int to) {
         final Helper<X> helper = getHelper();
         int i = from;
         int j = mid;
-        for (int k = from; k < to; k++)
-            if (i >= mid) helper.copy(sorted, j++, result, k);
-            else if (j >= to) helper.copy(sorted, i++, result, k);
-            else if (helper.less(sorted[j], sorted[i])) {
-                helper.incrementFixes(mid - i);
-                helper.copy(sorted, j++, result, k);
-            } else helper.copy(sorted, i++, result, k);
+        boolean instrumentation = helper.instrumented();
+
+        if(instrumentation){
+            for (int k = from; k < to; k++){
+                if (i >= mid)
+                    helper.copy(sorted, j++, result, k);
+                else if (j >= to)
+                    helper.copy(sorted, i++, result, k);
+                else if (helper.less(sorted[i], sorted[j]))
+                    helper.copy(sorted, i++, result, k);
+                else {
+                    helper.copy(sorted, j++, result, k);
+                    helper.incrementFixes(mid - i);
+                }
+            }
+        }else{
+            for (int k = from; k < to; k++){
+                if (i >= mid)
+                    result[k] = sorted[j++];
+                else if (j >= to)
+                    result[k] = sorted[i++];
+                else if (less(sorted[i], sorted[j]))
+                    result[k] = sorted[i++];
+                else
+                    result[k] = sorted[j++];
+            }
+        }
+
+    }
+    // CONSIDER combine with MergeSortBasic, perhaps.
+    private void merge(X[] a, X[] aux, int from, int mid, int to, boolean nocopy) {
+        final Helper<X> helper = getHelper();
+        boolean instrumentation = helper.instrumented();
+        if(instrumentation){
+            for (int k = from; k < to; k++)
+                helper.copy(a, k, aux, k );
+        }else{
+            for (int k = from; k < to; k++)
+                aux[k] = a[k];
+        }
+        int i = from;
+        int j = mid;
+        if(instrumentation){
+            for (int k = from; k < to; k++){
+                if (i >= mid) helper.copy(aux, j++, a, k);
+                else if (j >= to) helper.copy(aux, i++, a, k);
+                else if (helper.less(aux[j], aux[i])) {
+                    helper.incrementFixes(mid - i);
+                    helper.copy(aux, j++, a, k);
+                } else helper.copy(aux, i++, a, k);
+            }
+        }else{
+            for (int k = from; k < to; k++){
+                if (i >= mid)
+                    a[k] = aux[j++];
+                else if (j >= to)
+                    a[k] = aux[i++];
+                else if (less(aux[j], aux[i])) {
+                    a[k] = aux[j++];
+                } else
+                    a[k] = aux[i++];
+            }
+        }
+
     }
 
     public static final String MERGESORT = "mergesort";
@@ -94,5 +185,9 @@ public class MergeSort<X extends Comparable<X>> extends SortWithHelper<X> {
     }
 
     private final InsertionSort<X> insertionSort;
+
+    private static boolean less(Comparable v, Comparable w) {
+        return v.compareTo(w) < 0;
+    }
 }
 
